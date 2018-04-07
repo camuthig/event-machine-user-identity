@@ -6,6 +6,7 @@ namespace App\Api;
 
 use Prooph\EventMachine\EventMachine;
 use Prooph\EventMachine\EventMachineDescription;
+use Prooph\EventMachine\Persistence\Stream;
 
 class Projection implements EventMachineDescription
 {
@@ -39,5 +40,7 @@ class Projection implements EventMachineDescription
          *                                                          //Projector should implement Prooph\EventMachine\Projecting\Projector
          *  ->filterEvents([Event::USER_ADDED, EVENT::FRIEND_LINKED]); //Projector is only interested in listed events
          */
+        $eventMachine->watch(Stream::ofWriteModel())
+            ->withAggregateProjection(Aggregate::USER);
     }
 }

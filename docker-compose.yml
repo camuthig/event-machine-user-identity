@@ -10,6 +10,8 @@ services:
       - php:php
     volumes:
       - .:/var/www
+      - ./env/nginx/cross-domain-insecure.conf:/etc/nginx/conf.d/directive-only/cross-domain-insecure.conf
+      - ./env/nginx/www.conf:/etc/nginx/sites-enabled/www.conf
 
   php:
     image: prooph/php:7.1-fpm

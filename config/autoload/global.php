@@ -33,6 +33,13 @@ return [
         ],
         'ui_exchange' => getenv('RABBIT_UI_EXCHANGE')?: 'ui-exchange',
     ],
+    'socialite' => [
+        'google' => [
+            'client_id' => getenv('GOOGLE_CLIENT_ID'),
+            'client_secret' => getenv('GOOGLE_CLIENT_SECRET'),
+            'redirect' => getenv('GOOGLE_REDIRECT'),
+        ],
+    ],
     'event_machine' => [
         'descriptions' => [
             Type::class,

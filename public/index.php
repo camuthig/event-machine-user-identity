@@ -25,36 +25,49 @@ $app->pipe(new \Zend\Expressive\Helper\BodyParams\BodyParamsMiddleware());
 $app->pipe(new \App\Http\OriginalUriMiddleware());
 
 $app->pipe(\Zend\Stratigility\path(
-    '/api',
-    \Zend\Stratigility\middleware(function (Request $req, RequestHandler $handler) use($container, $env, $devMode): Response {
-        /** @var FastRoute\Dispatcher $router */
-        $router = require 'config/api_router.php';
-
-        $route = $router->dispatch($req->getMethod(), $req->getUri()->getPath());
-
-        if ($route[0] === FastRoute\Dispatcher::NOT_FOUND) {
-            return new \Zend\Diactoros\Response\EmptyResponse(404);
-        }
-
-        if ($route[0] === FastRoute\Dispatcher::METHOD_NOT_ALLOWED) {
-            return new \Zend\Diactoros\Response\EmptyResponse(405);
-        }
-
-        foreach ($route[2] as $name => $value) {
-            $req = $req->withAttribute($name, $value);
-        }
-
-        if(!$container->has($route[1])) {
-            throw new \RuntimeException("Http handler not found. Got " . $route[1]);
-        }
-
+    '/login/social',
+    \Zend\Stratigility\middleware(function (Request $request, RequestHandler $handler) use ($container, $env, $devMode): Response {
         $container->get(\Prooph\EventMachine\EventMachine::class)->bootstrap($env, $devMode);
 
-        /** @var RequestHandler $httpHandler */
-        $httpHandler = $container->get($route[1]);
+        $httpHandler = $container->get(\App\Http\SocialLoginHandler::class);
 
-        return $httpHandler->handle($req);
+        return $httpHandler->handle($request);
     })
+));
+
+$app->pipe(\Zend\Stratigility\path('/api', new \App\Http\JwtMiddleware()));
+
+$app->pipe(\Zend\Stratigility\path(
+   '/api',
+   \Zend\Stratigility\middleware(function (Request $req, RequestHandler $handler) use($container, $env, $devMode): Response {
+       /** @var FastRoute\Dispatcher $router */
+       $router = require 'config/api_router.php';
+
+       $route = $router->dispatch($req->getMethod(), $req->getUri()->getPath());
+
+       if ($route[0] === FastRoute\Dispatcher::NOT_FOUND) {
+           return new \Zend\Diactoros\Response\EmptyResponse(404);
+       }
+
+       if ($route[0] === FastRoute\Dispatcher::METHOD_NOT_ALLOWED) {
+           return new \Zend\Diactoros\Response\EmptyResponse(405);
+       }
+
+       foreach ($route[2] as $name => $value) {
+           $req = $req->withAttribute($name, $value);
+       }
+
+       if (!$container->has($route[1])) {
+           throw new \RuntimeException("Http handler not found. Got " . $route[1]);
+       }
+
+       $container->get(\Prooph\EventMachine\EventMachine::class)->bootstrap($env, $devMode);
+
+       /** @var RequestHandler $httpHandler */
+       $httpHandler = $container->get($route[1]);
+
+       return $httpHandler->handle($req);
+   })
 ));
 
 $app->pipe(\Zend\Stratigility\path('/', \Zend\Stratigility\middleware(function (Request $request, $handler): Response {

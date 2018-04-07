@@ -7,6 +7,7 @@ namespace App\Api;
 
 use Prooph\EventMachine\EventMachine;
 use Prooph\EventMachine\EventMachineDescription;
+use Prooph\EventMachine\JsonSchema\JsonSchema;
 
 class Event implements EventMachineDescription
 {
@@ -24,6 +25,8 @@ class Event implements EventMachineDescription
      * const EVENT_CONTEXT = 'MyContext.';
      * const USER_REGISTERED = self::EVENT_CONTEXT.'UserRegistered';
      */
+    public const USER_CREATED_WITH_IDENTITY = 'UserCreatedWithIdentity';
+    public const USER_IDENTITY_ADDED = 'UserIdentityAdded';
 
     /**
      * @param EventMachine $eventMachine
@@ -45,5 +48,22 @@ class Event implements EventMachineDescription
          *      ])
          * );
          */
+        $eventMachine->registerEvent(
+            self::USER_CREATED_WITH_IDENTITY,
+            JsonSchema::object([
+                Payload::USER_ID => Schema::userId(),
+                Payload::USER_EMAIL => JsonSchema::email(),
+                Payload::USER_NAME => JsonSchema::string()->withMinLength(2),
+                Payload::IDENTITY => Schema::userIdentity(),
+            ])
+        );
+
+        $eventMachine->registerEvent(
+            self::USER_IDENTITY_ADDED,
+            JsonSchema::object([
+                Payload::USER_ID => Schema::userId(),
+                Payload::IDENTITY => Schema::userIdentity(),
+            ])
+        );
     }
 }

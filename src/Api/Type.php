@@ -6,6 +6,7 @@ namespace App\Api;
 
 use Prooph\EventMachine\EventMachine;
 use Prooph\EventMachine\EventMachineDescription;
+use Prooph\EventMachine\JsonSchema\AnnotatedType;
 use Prooph\EventMachine\JsonSchema\JsonSchema;
 use Prooph\EventMachine\JsonSchema\Type\ObjectType;
 
@@ -36,11 +37,39 @@ class Type implements EventMachineDescription
 
 
     const HEALTH_CHECK = 'HealthCheck';
+    public const USER_IDENTITY_INPUT = 'UserIdentityInput';
+    public const USER_IDENTITY = 'UserIdentity';
+    public const USER = 'User';
 
     private static function healthCheck(): ObjectType
     {
         return JsonSchema::object([
             'system' => JsonSchema::boolean()
+        ]);
+    }
+
+    private static function userIdentityInput(): ObjectType
+    {
+        return JsonSchema::object([
+            Payload::IDENTITY_PROVIDER => Schema::identityProvider(),
+            Payload::IDENTITY_TOKEN => Schema::identityToken(),
+        ]);
+    }
+
+    private static function userIdentity(): ObjectType
+    {
+        return JsonSchema::object([
+            Payload::IDENTITY_PROVIDER => Schema::identityProvider(),
+            Payload::IDENTITY_ID => JsonSchema::string()->describedAs('The ID of the user on the OAuth2 server')
+        ]);
+    }
+
+    private static function user(): AnnotatedType
+    {
+        return JsonSchema::object([
+            Payload::USER_ID => Schema::userId(),
+            Payload::USER_NAME => Schema::userName(),
+            Payload::USER_EMAIL => Schema::userEmail()
         ]);
     }
 
@@ -51,6 +80,8 @@ class Type implements EventMachineDescription
     {
         //Register the HealthCheck type returned by @see \App\Api\Query::HEALTH_CHECK
         $eventMachine->registerType(self::HEALTH_CHECK, self::healthCheck());
+        $eventMachine->registerType(self::USER_IDENTITY, self::userIdentity());
+        $eventMachine->registerType(self::USER, self::user());
 
         /**
          * Register all types returned by queries
@@ -80,5 +111,7 @@ class Type implements EventMachineDescription
          *                                                             // but we show it this way here to ease the example
          * ]));
          */
+
+        $eventMachine->registerInputType(self::USER_IDENTITY_INPUT, self::userIdentityInput());
     }
 }

@@ -6,6 +6,7 @@ namespace App\Api;
 
 use Prooph\EventMachine\EventMachine;
 use Prooph\EventMachine\EventMachineDescription;
+use Prooph\EventMachine\JsonSchema\JsonSchema;
 
 class Command implements EventMachineDescription
 {
@@ -22,7 +23,8 @@ class Command implements EventMachineDescription
      *
      * const REGISTER_USER = 'RegisterUser';
      */
-
+    public const CREATE_USER_WITH_IDENTITY = 'CreateUserWithIdentity';
+    public const ADD_USER_IDENTITY = 'AddUserIdentity';
 
     /**
      * @param EventMachine $eventMachine
@@ -43,5 +45,20 @@ class Command implements EventMachineDescription
          *      ])
          * );
          */
+        $eventMachine->registerCommand(
+            self::CREATE_USER_WITH_IDENTITY,
+            JsonSchema::object([
+                Payload::USER_ID => JsonSchema::uuid(),
+                Payload::IDENTITY => Schema::userIdentityInput(),
+            ])
+        );
+
+        $eventMachine->registerCommand(
+            self::ADD_USER_IDENTITY,
+            JsonSchema::object([
+                Payload::USER_ID => JsonSchema::uuid(),
+                Payload::IDENTITY => Schema::userIdentityInput(),
+            ])
+        );
     }
 }

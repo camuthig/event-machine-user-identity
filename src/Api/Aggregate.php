@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Api;
 
+use App\Infrastructure\ContextProvider\SocialiteContextProvider;
+use App\Model\User;
 use Prooph\EventMachine\EventMachine;
 use Prooph\EventMachine\EventMachineDescription;
 
@@ -16,7 +18,7 @@ class Aggregate implements EventMachineDescription
      *
      * const USER = 'User';
      */
-
+    public const USER = 'User';
 
     /**
      * @param EventMachine $eventMachine
@@ -43,5 +45,20 @@ class Aggregate implements EventMachineDescription
          *      ->recordThat(Event::USERNAME_CHANGED)
          *      ->apply([User::class, 'whenUsernameChanged']);
          */
+        $eventMachine->process(Command::CREATE_USER_WITH_IDENTITY)
+            ->provideContext(SocialiteContextProvider::class)
+            ->withNew(self::USER)
+            ->identifiedBy(Payload::USER_ID)
+            ->handle([User::class, 'createUserWithIdentity'])
+            ->recordThat(Event::USER_CREATED_WITH_IDENTITY)
+            ->apply([User::class, 'whenUserCreatedWithIdentity']);
+
+        $eventMachine->process(Command::ADD_USER_IDENTITY)
+            ->provideContext(SocialiteContextProvider::class)
+            ->withExisting(self::USER)
+            ->identifiedBy(Payload::USER_ID)
+            ->handle([User::class, 'addUserIdentity'])
+            ->recordThat(Event::USER_IDENTITY_ADDED)
+            ->apply([User::class, 'whenUserIdentityAdded']);
     }
 }

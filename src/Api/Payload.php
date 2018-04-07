@@ -20,6 +20,16 @@ class Payload
      * $username = $registerUser->get(Payload::USERNAME); //This is readable and eases refactoring in a larger code base.
      */
 
+    // User Payload
+    public const USER_ID = 'userId';
+    public const USER_EMAIL = 'email';
+    public const USER_NAME = 'name';
+
+    public const IDENTITY = 'identity';
+    public const IDENTITY_PROVIDER = 'provider';
+    public const IDENTITY_ID = 'id';
+    public const IDENTITY_TOKEN = 'token';
+
     //Predefined keys for query payloads, see App\Api\Schema::queryPagination() for further information
     const SKIP = 'skip';
     const LIMIT = 'limit';

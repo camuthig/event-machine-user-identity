@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Api;
 
+use Prooph\EventMachine\JsonSchema\AnnotatedType;
 use Prooph\EventMachine\JsonSchema\JsonSchema;
 use Prooph\EventMachine\JsonSchema\Type\StringType;
 use Prooph\EventMachine\JsonSchema\Type\TypeRef;
@@ -45,7 +46,49 @@ class Schema
         return JsonSchema::typeRef(Type::HEALTH_CHECK);
     }
 
+    public static function userIdentityInput(): TypeRef
+    {
+        return JsonSchema::typeRef(Type::USER_IDENTITY_INPUT);
+    }
 
+    public static function identityProvider(): AnnotatedType
+    {
+        return JsonSchema::string(['google'])
+            ->describedAs('The OAuth2 token provider')
+            ->entitled('Provider');
+    }
+
+    public static function identityToken(): AnnotatedType
+    {
+        return JsonSchema::string()
+            ->describedAs('The OAuth2 token verifying the identity of the user')
+            ->entitled('Identity Token');
+    }
+
+    public static function userIdentity(): TypeRef
+    {
+        return JsonSchema::typeRef(Type::USER_IDENTITY);
+    }
+
+    public static function userId(): AnnotatedType
+    {
+        return JsonSchema::uuid()->describedAs('The unique ID of the User');
+    }
+
+    public static function userName(): AnnotatedType
+    {
+        return JsonSchema::string();
+    }
+
+    public static function userEmail(): AnnotatedType
+    {
+        return JsonSchema::email();
+    }
+
+    public static function userType(): TypeRef
+    {
+        return JsonSchema::typeRef(Type::USER);
+    }
     /**
      * Can be used as JsonSchema::object() (optional) property definition in query payloads to enable pagination
      * @return array

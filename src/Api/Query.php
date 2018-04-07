@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Api;
 
+use App\Infrastructure\Finder\UserFinder;
 use App\Infrastructure\System\HealthCheckResolver;
 use Prooph\EventMachine\EventMachine;
 use Prooph\EventMachine\EventMachineDescription;
+use Prooph\EventMachine\JsonSchema\JsonSchema;
 
 class Query implements EventMachineDescription
 {
@@ -33,6 +35,8 @@ class Query implements EventMachineDescription
      * Default Query, used to perform health checks using messagebox or GraphQL endpoint
      */
     const HEALTH_CHECK = 'HealthCheck';
+    const USER_BY_IDENTITY = 'UserByIdentity';
+    const USER = 'User';
 
     public static function describe(EventMachine $eventMachine): void
     {
@@ -68,5 +72,24 @@ class Query implements EventMachineDescription
          *  ->resolveWith(UsersResolver::class)
          *  ->setReturnType(JsonSchema::array(Schema::user())); //<-- Return type is an array of Schema::user() (type reference to Type::USER)
          */
+
+        $eventMachine->registerQuery(
+            self::USER_BY_IDENTITY,
+            // @TODO Any reason that we can't use a TypeRef instead of an Object here?
+            JsonSchema::object([
+                Payload::IDENTITY => JsonSchema::typeRef(Type::USER_IDENTITY_INPUT),
+            ])
+        )
+            ->resolveWith(UserFinder::class)
+            ->setReturnType(JsonSchema::typeRef(Aggregate::USER));
+
+        $eventMachine->registerQuery(
+            self::USER,
+            JsonSchema::object([
+                Payload::USER_ID => Schema::userId()
+           ])
+        )
+            ->resolveWith(UserFinder::class)
+            ->setReturnType(JsonSchema::typeRef(Aggregate::USER));
     }
 }

@@ -2,8 +2,14 @@
 
 namespace App\Service;
 
+use App\Api\Aggregate;
 use App\Http\ErrorResponseGenerator;
 use App\Http\MessageSchemaMiddleware;
+use App\Http\SocialiteCallbackHandler;
+use App\Http\SocialiteLoginHandler;
+use App\Http\SocialLoginHandler;
+use App\Infrastructure\ContextProvider\SocialiteContextProvider;
+use App\Infrastructure\Finder\UserFinder;
 use App\Infrastructure\Logger\PsrErrorLogger;
 use App\Infrastructure\ServiceBus\CommandBus;
 use App\Infrastructure\ServiceBus\EventBus;
@@ -13,6 +19,7 @@ use App\Infrastructure\System\HealthCheckResolver;
 use Codeliner\ArrayReader\ArrayReader;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
+use Overtrue\Socialite\SocialiteManager;
 use Prooph\Common\Event\ProophActionEventEmitter;
 use Prooph\Common\Messaging\NoOpMessageConverter;
 use Prooph\EventMachine\Container\ContainerChain;
@@ -35,6 +42,7 @@ use Prooph\ServiceBus\Message\HumusAmqp\AmqpMessageProducer;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Zend\Diactoros\Response;
+use Zend\Session\SessionManager;
 use Zend\Stratigility\Middleware\ErrorHandler;
 
 final class ServiceFactory
@@ -276,6 +284,45 @@ final class ServiceFactory
             $eventMachine->initialize($containerChain);
 
             return $eventMachine;
+        });
+    }
+
+    public function socialiteManager(): SocialiteManager
+    {
+        return $this->makeSingleton(SocialiteManager::class, function () {
+            return new SocialiteManager($this->config->arrayValue('socialite'));
+        });
+    }
+
+    public function socialiteContentProvider(): SocialiteContextProvider
+    {
+        $this->assertContainerIsset();
+
+        return $this->makeSingleton(SocialiteContextProvider::class, function () {
+            return new SocialiteContextProvider($this->container->get(SocialiteManager::class));
+        });
+    }
+
+    public function socialLoginHandler(): SocialLoginHandler
+    {
+        $this->assertContainerIsset();
+
+        return $this->makeSingleton(SocialLoginHandler::class, function () {
+            return new SocialLoginHandler($this->eventMachine(), $this->container->get(SocialiteManager::class));
+        });
+    }
+
+    public function userFinder(): UserFinder
+    {
+        return $this->makeSingleton(UserFinder::class, function () {
+            return new UserFinder(
+                AggregateProjector::aggregateCollectionName(
+                    $this->eventMachine()->appVersion(),
+                    Aggregate::USER
+                ),
+                $this->documentStore(),
+                $this->container->get(SocialiteManager::class)
+            );
         });
     }
 
