@@ -5,6 +5,9 @@ with social authentication and CORS built in.
 
 See the [documentation](https://proophsoftware.github.io/event-machine/intro/) for details on Event Machine.
 
+The application currently supports Google login only, but can be expanded to other OAuth2 providers as well. A sample
+consuming application has also be created [here](https://github.com/camuthig/event-machine-user-identity-app).
+
 ## Getting Started
 
 Before getting started with this projection, copy `app.env.example` to `app.env` and add your client ID and secret for
