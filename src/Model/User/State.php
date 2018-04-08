@@ -36,8 +36,8 @@ class State implements ImmutableRecord
     public static function __schema(): Type
     {
         return self::generateSchemaFromPropTypeMap([
-            'identities' => UserIdentity::class,
-       ]);
+            Payload::USER_IDENTITIES => UserIdentity::class,
+        ]);
     }
 
     public function userId(): string
@@ -57,13 +57,13 @@ class State implements ImmutableRecord
 
     public function identities(): array
     {
-        return $this->identities;
+        return array_values($this->identities);
     }
 
-     public function identityForProvider(string $provider): ?UserIdentity
-     {
-         return $this->identities[$provider] ? UserIdentity::fromArray($this->identities[$provider]) : null;
-     }
+    public function identityForProvider(string $provider): ?UserIdentity
+    {
+        return $this->identities[$provider] ? UserIdentity::fromArray($this->identities[$provider]) : null;
+    }
 
     public function withIdentity(array $identity): State
     {

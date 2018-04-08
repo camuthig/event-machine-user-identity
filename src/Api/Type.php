@@ -69,7 +69,8 @@ class Type implements EventMachineDescription
         return JsonSchema::object([
             Payload::USER_ID => Schema::userId(),
             Payload::USER_NAME => Schema::userName(),
-            Payload::USER_EMAIL => Schema::userEmail()
+            Payload::USER_EMAIL => Schema::userEmail(),
+            Payload::USER_IDENTITIES => JsonSchema::array(JsonSchema::typeRef(self::USER_IDENTITY))
         ]);
     }
 

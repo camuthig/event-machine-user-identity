@@ -24,6 +24,7 @@ class Payload
     public const USER_ID = 'userId';
     public const USER_EMAIL = 'email';
     public const USER_NAME = 'name';
+    public const USER_IDENTITIES = 'identities';
 
     public const IDENTITY = 'identity';
     public const IDENTITY_PROVIDER = 'provider';

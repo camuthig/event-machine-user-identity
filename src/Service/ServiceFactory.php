@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Api\Aggregate;
+use App\Api\Projection;
 use App\Http\ErrorResponseGenerator;
 use App\Http\MessageSchemaMiddleware;
 use App\Http\SocialiteCallbackHandler;
@@ -11,6 +12,7 @@ use App\Http\SocialLoginHandler;
 use App\Infrastructure\ContextProvider\SocialiteContextProvider;
 use App\Infrastructure\Finder\UserFinder;
 use App\Infrastructure\Logger\PsrErrorLogger;
+use App\Infrastructure\Projection\LoginIdentityProjector;
 use App\Infrastructure\ServiceBus\CommandBus;
 use App\Infrastructure\ServiceBus\EventBus;
 use App\Infrastructure\ServiceBus\QueryBus;
@@ -320,9 +322,20 @@ final class ServiceFactory
                     $this->eventMachine()->appVersion(),
                     Aggregate::USER
                 ),
+                AggregateProjector::generateCollectionName(
+                    $this->eventMachine()->appVersion(),
+                    Projection::LOGIN_IDENTITIES
+                ),
                 $this->documentStore(),
                 $this->container->get(SocialiteManager::class)
             );
+        });
+    }
+
+    public function loginIdentityProjector(): LoginIdentityProjector
+    {
+        return $this->makeSingleton(LoginIdentityProjector::class, function () {
+            return new LoginIdentityProjector($this->documentStore());
         });
     }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Api;
 
+use App\Infrastructure\Projection\LoginIdentityProjector;
 use Prooph\EventMachine\EventMachine;
 use Prooph\EventMachine\EventMachineDescription;
 use Prooph\EventMachine\Persistence\Stream;
@@ -17,6 +18,7 @@ class Projection implements EventMachineDescription
      *
      * const USER_FRIENDS = 'UserFriends';
      */
+    public const LOGIN_IDENTITIES = 'LoginIdentities';
 
     /**
      * @param EventMachine $eventMachine
@@ -42,5 +44,8 @@ class Projection implements EventMachineDescription
          */
         $eventMachine->watch(Stream::ofWriteModel())
             ->withAggregateProjection(Aggregate::USER);
+
+        $eventMachine->watch(Stream::ofWriteModel())
+            ->with(self::LOGIN_IDENTITIES, LoginIdentityProjector::class);
     }
 }

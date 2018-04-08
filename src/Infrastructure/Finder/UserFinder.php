@@ -6,6 +6,7 @@ namespace App\Infrastructure\Finder;
 
 use App\Api\Payload;
 use App\Api\Query;
+use App\Infrastructure\Projection\LoginIdentityProjector;
 use Overtrue\Socialite\AccessToken;
 use Overtrue\Socialite\SocialiteManager;
 use Prooph\EventMachine\Messaging\Message;
@@ -22,16 +23,26 @@ class UserFinder
     /**
      * @var string
      */
-    private $collectionName;
+    private $userCollection;
+
+    /**
+     * @var string
+     */
+    private $loginIdentityCollection;
 
     /**
      * @var SocialiteManager
      */
     private $socialiteManager;
 
-    public function __construct(string $collectionName, DocumentStore $documentStore, SocialiteManager $socialiteManager)
-    {
-        $this->collectionName = $collectionName;
+    public function __construct(
+        string $userCollection,
+        string $loginIdentityCollection,
+        DocumentStore $documentStore,
+        SocialiteManager $socialiteManager
+    ) {
+        $this->userCollection = $userCollection;
+        $this->loginIdentityCollection = $loginIdentityCollection;
         $this->documentStore = $documentStore;
         $this->socialiteManager = $socialiteManager;
     }
@@ -52,7 +63,7 @@ class UserFinder
 
     private function getUserById(Message $message): ?array
     {
-        return $this->documentStore->getDoc($this->collectionName, $message->get(Payload::USER_ID));
+        return $this->documentStore->getDoc($this->userCollection, $message->get(Payload::USER_ID));
     }
 
     private function getUserByIdentity(Message $message): ?array
@@ -63,21 +74,18 @@ class UserFinder
             ->driver($identity[Payload::IDENTITY_PROVIDER])
             ->user(new AccessToken(['access_token' => $identity[Payload::IDENTITY_TOKEN]]));
 
-        $users = $this->documentStore->filterDocs(
-            $this->collectionName,
-            new DocumentStore\Filter\EqFilter(
-                sprintf('identities.%s.id', $identity[Payload::IDENTITY_PROVIDER]),
-                $user->getId()
-            )
+        $loginIdentity = $this->documentStore->getDoc(
+            $this->loginIdentityCollection,
+            LoginIdentityProjector::generateId(strtolower($user->getProviderName()), $user->getId())
         );
 
-        // We only care about the first user found.
-        foreach ($users as $user) {
-            return $user;
+
+        if ($loginIdentity !== null) {
+            return $this->documentStore->getDoc($this->userCollection, $loginIdentity[Payload::USER_ID]);
         }
 
         $users = $this->documentStore->filterDocs(
-            $this->collectionName,
+            $this->userCollection,
             new DocumentStore\Filter\EqFilter(
                 'email',
                 $user->getEmail()
